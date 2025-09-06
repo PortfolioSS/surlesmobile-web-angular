@@ -1,0 +1,21 @@
+name: deploy-angular
+on: { push: { branches: [ main ] }, workflow_dispatch: {} }
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    permissions: { id-token: write, contents: read }
+    env:
+      AWS_REGION: us-east-1
+      S3_BUCKET: surlesmobile.com
+      CF_DISTRIBUTION_ID: ${{ secrets.CF_DIST_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - run: npm run gen:api
+      - run: npm run build -- --configuration production
+      - uses: aws-actions/configure-aws-credentials@v4
+        with: { role-to-assume: ${{ secrets.AWS_OIDC_ROLE_ARN }}, aws-region: ${{ env.AWS_REGION }} }
+      - run: aws s3 sync ./dist/ "s3://${{ env.S3_BUCKET }}" --delete
+      - run: aws cloudfront create-invalidation --distribution-id ${{ env.CF_DISTRIBUTION_ID }} --paths "/*"
