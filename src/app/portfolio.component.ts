@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, Signal, signal } from '@angular/core';
+import { Component, OnInit, inject, WritableSignal, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../environments/environment';
@@ -19,7 +19,7 @@ type Portfolio = {
 })
 export class PortfolioComponent implements OnInit {
   private http = inject(HttpClient);
-  data: Signal<Portfolio | null> = signal<Portfolio | null>(null);
+  data: WritableSignal<Portfolio | null> = signal<Portfolio | null>(null);
   async ngOnInit(){
     const res = await this.http.get<Portfolio>(`${environment.apiBase}/portfolio`).toPromise();
     this.data.set(res as Portfolio);
